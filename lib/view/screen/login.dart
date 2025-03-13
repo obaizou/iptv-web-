@@ -198,6 +198,9 @@
 // }
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get_common/get_reset.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 import 'dart:html' as html;
 import 'package:iptv_player_web/view/screen/ActivationPage.dart';
 
@@ -239,11 +242,8 @@ class Login extends StatelessWidget {
 
           await Future.delayed(Duration(seconds: 2));
           isLoading.value = false;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => ActivationPage(macAddress: macAddress)),
-          );
+          Get.off(ActivationPage(macAddress: macAddress));
+
           return;
         } else {
           errorMessage.value = "رمز الجهاز غير صحيح، يرجى التحقق.";

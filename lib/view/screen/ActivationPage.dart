@@ -1,10 +1,46 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:iptv_player_web/view/screen/login.dart';
+import 'dart:html' as html;
 
 class ActivationPage extends StatelessWidget {
   final String macAddress; // تمرير MAC Address عند التنقل للصفحة
 
   ActivationPage({required this.macAddress});
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("تأكيد الخروج"),
+          content: Text("هل أنت متأكد أنك تريد تسجيل الخروج؟"),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(context), // ❌ إغلاق النافذة بدون تسجيل خروج
+              child: Text("إلغاء"),
+            ),
+            TextButton(
+              onPressed: () {
+                _logout(); // ✅ تنفيذ عملية تسجيل الخروج
+              },
+              child: Text("نعم", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// ✅ دالة `logout` لحذف البيانات وإعادة المستخدم إلى صفحة تسجيل الدخول
+  void _logout() {
+    html.window.localStorage
+        .remove('mac_address'); // 🔥 حذف MAC Address من التخزين
+    Get.offAll(
+        Login()); // 🚀 الانتقال إلى صفحة تسجيل الدخول وإزالة جميع الصفحات السابقة
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +103,60 @@ class ActivationPage extends StatelessWidget {
                       _buildInfoRow("Mac Address:", macAddress),
                       _buildInfoRow("Status:", statusText),
                       _buildInfoRow("Expiration:", expirationDate),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 330),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {},
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 50, vertical: 14),
+                                color: Colors.red,
+                                child: Text(
+                                  'Add Playlist',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {},
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 20),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 50, vertical: 14),
+                                color: Colors.red,
+                                child: Text(
+                                  'Activate',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                _showLogoutDialog(
+                                    context); // ✅ عرض نافذة تأكيد قبل تسجيل الخروج
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 50, vertical: 14),
+                                color: Colors.red,
+                                child: Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
