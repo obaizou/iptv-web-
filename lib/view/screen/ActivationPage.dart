@@ -10,6 +10,10 @@ class ActivationPage extends StatelessWidget {
   final ValueNotifier<bool> showPlaylistForm = ValueNotifier(false);
   final ValueNotifier<bool> showXtreamForm = ValueNotifier(false);
   final ValueNotifier<bool> showValidationResult = ValueNotifier(false);
+  ValueNotifier<bool> showXtreamDetails = ValueNotifier(false);
+  Map<String, dynamic>? xtreamData;
+  ValueNotifier<bool> showM3UDetails = ValueNotifier(false);
+  Map<String, dynamic>? m3uData;
   Map<String, dynamic>? validatedData;
   ActivationPage({required this.macAddress});
   Future<bool> validateM3U(String url) async {
@@ -22,21 +26,63 @@ class ActivationPage extends StatelessWidget {
   }
 
   Future<bool> validateXtream(String server, String user, String pass) async {
-    final url =
-        Uri.parse('$server/get.php?username=$user&password=$pass&type=m3u');
-    try {
-      final response = await http.get(url);
-      return response.statusCode == 200 && response.body.contains("#EXTM3U");
-    } catch (e) {
-      return false;
+    if (!server.startsWith("http")) {
+      server = "http://$server";
     }
+
+    final url =
+        Uri.parse('$server/player_api.php?username=$user&password=$pass');
+
+    try {
+      final response = await http.get(url,
+          headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"});
+
+      if (response.statusCode == 200 &&
+          response.body.contains("\"user_info\"")) {
+        return true;
+      }
+    } catch (e) {
+      print("Error validating Xtream: $e");
+    }
+    return false;
   }
 
   Future<void> saveToFirestore(Map<String, dynamic> data) async {
-    await FirebaseFirestore.instance
-        .collection('devices')
-        .doc(macAddress)
-        .set({'playlist_data': data}, SetOptions(merge: true));
+    if (macAddress.isEmpty) {
+      print("Error: MAC Address is empty!");
+      return;
+    }
+
+    DocumentReference docRef =
+        FirebaseFirestore.instance.collection('devices').doc(macAddress);
+
+    try {
+      DocumentSnapshot doc = await docRef.get();
+
+      Map<String, dynamic> updateData = {
+        'playlist_data': FieldValue.arrayUnion([data]),
+      };
+
+      // ✅ إضافة معلومات السيرفر إذا كان Xtream Codes
+      if (data['type'] == 'Xtream') {
+        // updateData.addAll({
+        //   'server': data['server'] ?? '',
+        //   'username': data['username'] ?? '',
+        //   'password': data['password'] ?? '',
+        // });
+      }
+
+      // ✅ إذا لم يكن المستند موجودًا، يتم إنشاؤه
+      if (!doc.exists) {
+        await docRef.set(updateData);
+      } else {
+        await docRef.update(updateData);
+      }
+
+      print("✅ Data saved successfully!");
+    } catch (e) {
+      print("❌ Error saving to Firestore: $e");
+    }
   }
 
   /// ✅ دالة تسجيل الخروج
@@ -223,6 +269,7 @@ class ActivationPage extends StatelessWidget {
   }
 
   /// 🎯 **نموذج إدخال Playlist (M3U)**
+
   Widget _buildPlaylistForm() {
     final TextEditingController playlistURLController = TextEditingController();
     final TextEditingController playlistNameController =
@@ -243,10 +290,59 @@ class ActivationPage extends StatelessWidget {
             fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
       ),
       _buildTextField("Playlist URL", playlistURLController),
+      SizedBox(height: 10),
+      _buildButton("SUBMIT", Colors.red, () async {
+        String url = playlistURLController.text.trim();
+        String name = playlistNameController.text.trim();
+
+        if (url.isEmpty || name.isEmpty) {
+          Get.snackbar("Error", "All fields are required",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        bool isValid = await validateM3U(url);
+        if (!isValid) {
+          Get.snackbar("Invalid Playlist", "The provided M3U URL is not valid",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        m3uData = {"name": name, "url": url, "type": "M3U"};
+        await saveToFirestore(m3uData!);
+
+        showM3UDetails.value = true;
+        Get.snackbar("Success", "M3U Playlist added successfully",
+            backgroundColor: Colors.green, colorText: Colors.white);
+      }),
+      ValueListenableBuilder<bool>(
+        valueListenable: showM3UDetails,
+        builder: (context, isVisible, child) {
+          return isVisible
+              ? Container(
+                  padding: EdgeInsets.all(10),
+                  margin: EdgeInsets.only(top: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.green[800],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      Text("Playlist Name: ${m3uData!['name']}",
+                          style: TextStyle(color: Colors.white)),
+                      Text("Playlist URL: ${m3uData!['url']}",
+                          style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                )
+              : SizedBox.shrink();
+        },
+      ),
     ]);
   }
 
   /// 🎯 **نموذج إدخال Xtream Codes**
+
   Widget _buildXtreamForm() {
     final TextEditingController serverURLController = TextEditingController();
     final TextEditingController usernameController = TextEditingController();
@@ -274,6 +370,61 @@ class ActivationPage extends StatelessWidget {
             fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
       ),
       _buildTextField("Password", passwordController, isPassword: true),
+      SizedBox(height: 10),
+      _buildButton("SUBMIT", Colors.red, () async {
+        String server = serverURLController.text.trim();
+        String user = usernameController.text.trim();
+        String pass = passwordController.text.trim();
+
+        if (server.isEmpty || user.isEmpty || pass.isEmpty) {
+          Get.snackbar("Error", "All fields are required",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        bool isValid = await validateXtream(server, user, pass);
+        if (!isValid) {
+          Get.snackbar(
+              "Invalid Xtream", "The provided Xtream Codes are not valid",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        xtreamData = {
+          "server": server,
+          "username": user,
+          "password": pass,
+          "type": "Xtream"
+        };
+        await saveToFirestore(xtreamData!);
+
+        showXtreamDetails.value = true;
+        Get.snackbar("Success", "Xtream Codes added successfully",
+            backgroundColor: Colors.green, colorText: Colors.white);
+      }),
+      ValueListenableBuilder<bool>(
+        valueListenable: showXtreamDetails,
+        builder: (context, isVisible, child) {
+          return isVisible
+              ? Container(
+                  padding: EdgeInsets.all(10),
+                  margin: EdgeInsets.only(top: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.green[800],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      Text("Server: ${xtreamData!['server']}",
+                          style: TextStyle(color: Colors.white)),
+                      Text("Username: ${xtreamData!['username']}",
+                          style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                )
+              : SizedBox.shrink();
+        },
+      ),
     ]);
   }
 
@@ -296,9 +447,6 @@ class ActivationPage extends StatelessWidget {
           SizedBox(height: 10),
           ...fields,
           SizedBox(height: 10),
-          _buildButton("SUBMIT", Colors.red, () {
-            print("تم حفظ البيانات");
-          }),
         ],
       ),
     );
