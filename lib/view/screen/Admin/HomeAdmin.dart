@@ -178,48 +178,54 @@ class HomeAdmin extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       Expanded(
-                        child: StreamBuilder<QuerySnapshot>(
-                          stream: _firestore
-                              .collection('activate_keys')
-                              .orderBy('created_at', descending: true)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            }
-                            var keys = snapshot.data!.docs;
+                        child: ListView(
+                          children: [
+                            StreamBuilder<QuerySnapshot>(
+                              stream: _firestore
+                                  .collection('activate_keys')
+                                  .orderBy('created_at', descending: true)
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                var keys = snapshot.data!.docs;
 
-                            return DataTable(
-                              columns: const [
-                                DataColumn(label: Text('Key')),
-                                DataColumn(label: Text('Created At')),
-                                DataColumn(label: Text('Expires At')),
-                                DataColumn(label: Text('Status')),
-                                DataColumn(label: Text('Actions')),
-                              ],
-                              rows: keys.map((doc) {
-                                Map<String, dynamic> data =
-                                    doc.data() as Map<String, dynamic>;
-                                return DataRow(cells: [
-                                  DataCell(SelectableText(data['key'])),
-                                  DataCell(Text(
-                                      data['created_at'].toDate().toString())),
-                                  DataCell(Text(
-                                      data['expires_at'].toDate().toString())),
-                                  DataCell(Text(data['status'])),
-                                  DataCell(
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () =>
-                                          deleteActivationKey(data['key']),
-                                    ),
-                                  ),
-                                ]);
-                              }).toList(),
-                            );
-                          },
+                                return DataTable(
+                                  columns: const [
+                                    DataColumn(label: Text('Key')),
+                                    DataColumn(label: Text('Created At')),
+                                    DataColumn(label: Text('Expires At')),
+                                    DataColumn(label: Text('Status')),
+                                    DataColumn(label: Text('Actions')),
+                                  ],
+                                  rows: keys.map((doc) {
+                                    Map<String, dynamic> data =
+                                        doc.data() as Map<String, dynamic>;
+                                    return DataRow(cells: [
+                                      DataCell(SelectableText(data['key'])),
+                                      DataCell(Text(data['created_at']
+                                          .toDate()
+                                          .toString())),
+                                      DataCell(Text(data['expires_at']
+                                          .toDate()
+                                          .toString())),
+                                      DataCell(Text(data['status'])),
+                                      DataCell(
+                                        IconButton(
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.red),
+                                          onPressed: () =>
+                                              deleteActivationKey(data['key']),
+                                        ),
+                                      ),
+                                    ]);
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
