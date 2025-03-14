@@ -30,6 +30,7 @@ class HomeAdmin extends StatelessWidget {
           'key': key,
           'created_at': createdAt,
           'expires_at': expiryDate,
+          'finish': false,
           'status': 'active',
         });
 

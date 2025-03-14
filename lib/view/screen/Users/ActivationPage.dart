@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:iptv_player_web/view/screen/Users/login.dart';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class ActivationPage extends StatelessWidget {
   final String macAddress;
@@ -157,13 +158,7 @@ class ActivationPage extends StatelessWidget {
       };
 
       // ✅ إضافة معلومات السيرفر إذا كان Xtream Codes
-      if (data['type'] == 'Xtream') {
-        // updateData.addAll({
-        //   'server': data['server'] ?? '',
-        //   'username': data['username'] ?? '',
-        //   'password': data['password'] ?? '',
-        // });
-      }
+      if (data['type'] == 'Xtream') {}
 
       // ✅ إذا لم يكن المستند موجودًا، يتم إنشاؤه
       if (!doc.exists) {
@@ -229,7 +224,12 @@ class ActivationPage extends StatelessWidget {
           final deviceData = snapshot.data!;
           bool isActivated = deviceData['is_activated'] ?? false;
           String statusText = isActivated ? "Active ✅" : "Inactive ❌";
-          String expirationDate = deviceData['expiration'] ?? "Unavailable";
+          String expirationDate = "Unavailable";
+          if (deviceData['expires_at'] != null) {
+            Timestamp timestamp = deviceData['expires_at'];
+            DateTime dateTime = timestamp.toDate();
+            expirationDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
+          }
 
           return ListView(
             padding: EdgeInsets.all(20),
@@ -476,8 +476,21 @@ class ActivationPage extends StatelessWidget {
     );
   }
 
+  // Widget _buildActivateForm() {
+  //   final TextEditingController ActivateKeyController = TextEditingController();
+
+  //   return _buildFormContainer("Add Your Key To Activate Your Device", [
+  //     SizedBox(height: 10),
+  //     Text(
+  //       'KEY',
+  //       style: TextStyle(
+  //           fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
+  //     ),
+  //     _buildTextField("KEY", ActivateKeyController),
+  //   ]);
+  // }
   Widget _buildActivateForm() {
-    final TextEditingController ActivateKeyController = TextEditingController();
+    final TextEditingController activateKeyController = TextEditingController();
 
     return _buildFormContainer("Add Your Key To Activate Your Device", [
       SizedBox(height: 10),
@@ -486,9 +499,120 @@ class ActivationPage extends StatelessWidget {
         style: TextStyle(
             fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
       ),
-      _buildTextField("KEY", ActivateKeyController),
+      _buildTextField("KEY", activateKeyController),
+      SizedBox(height: 10),
+      _buildButton("SUBMIT", Colors.red, () async {
+        String key = activateKeyController.text.trim();
+
+        if (key.isEmpty) {
+          Get.snackbar("Error", "Key is required",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        // البحث عن المفتاح في Firestore
+        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+            .collection('activate_keys')
+            .where('key', isEqualTo: key)
+            .get();
+
+        if (querySnapshot.docs.isEmpty) {
+          Get.snackbar("Error", "Invalid Key",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        var keyData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+
+        if (keyData['finish'] == true) {
+          Get.snackbar("Error", "Key already used",
+              backgroundColor: Colors.red, colorText: Colors.white);
+          return;
+        }
+
+        // تحديث المفتاح ليكون مستخدمًا (تحويل finish إلى true)
+        await FirebaseFirestore.instance
+            .collection('activate_keys')
+            .doc(querySnapshot.docs.first.id)
+            .update({'finish': true});
+
+        // تحديث حالة الجهاز
+        await FirebaseFirestore.instance
+            .collection('devices')
+            .doc(macAddress)
+            .update({
+          'is_activated': true,
+          'created_at': keyData['created_at'],
+          'expires_at': keyData['expires_at']
+        });
+
+        Get.snackbar("Success", "Device activated successfully",
+            backgroundColor: Colors.green, colorText: Colors.white);
+      }),
     ]);
   }
+  // Widget _buildActivateForm() {
+  //   final TextEditingController activateKeyController = TextEditingController();
+
+  //   return _buildFormContainer("Add Your Key To Activate Your Device", [
+  //     SizedBox(height: 10),
+  //     Text(
+  //       'KEY',
+  //       style: TextStyle(
+  //           fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
+  //     ),
+  //     _buildTextField("KEY", activateKeyController),
+  //     SizedBox(height: 10),
+  //     _buildButton("SUBMIT", Colors.red, () async {
+  //       String key = activateKeyController.text.trim();
+
+  //       if (key.isEmpty) {
+  //         Get.snackbar("Error", "Key is required",
+  //             backgroundColor: Colors.red, colorText: Colors.white);
+  //         return;
+  //       }
+
+  //       // البحث عن المفتاح في Firestore
+  //       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+  //           .collection('activate_keys')
+  //           .where('key', isEqualTo: key)
+  //           .get();
+
+  //       if (querySnapshot.docs.isEmpty) {
+  //         Get.snackbar("Error", "Invalid Key",
+  //             backgroundColor: Colors.red, colorText: Colors.white);
+  //         return;
+  //       }
+
+  //       var keyData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+
+  //       if (keyData['finish'] == true) {
+  //         Get.snackbar("Error", "Key already used",
+  //             backgroundColor: Colors.red, colorText: Colors.white);
+  //         return;
+  //       }
+
+  //       // تحديث المفتاح ليكون مستخدمًا
+  //       await FirebaseFirestore.instance
+  //           .collection('activate_keys')
+  //           .doc(querySnapshot.docs.first.id)
+  //           .update({'finish': true});
+
+  //       // تحديث حالة الجهاز
+  //       await FirebaseFirestore.instance
+  //           .collection('devices')
+  //           .doc(macAddress)
+  //           .update({
+  //         'is_activated': true,
+  //         'created_at': keyData['created_at'],
+  //         'expires_at': keyData['expires_at']
+  //       });
+
+  //       Get.snackbar("Success", "Device activated successfully",
+  //           backgroundColor: Colors.green, colorText: Colors.white);
+  //     }),
+  //   ]);
+  // }
 
   /// 🎯 **نموذج إدخال Playlist (M3U)**
 
