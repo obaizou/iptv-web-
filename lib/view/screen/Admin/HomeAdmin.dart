@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:iptv_player_web/view/screen/Admin/login.dart'; // استيراد صفحة Login
 
 class HomeAdmin extends StatelessWidget {
   const HomeAdmin({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Admin Home'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // استدعاء وظيفة تسجيل الخروج من صفحة Login
+              LoginADMIN().logout();
+            },
+          ),
+        ],
+      ),
+      body: const Center(
+        child: Text('Welcome to Admin Panel'),
+      ),
+    );
   }
 }
