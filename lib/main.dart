@@ -2,8 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:html' as html; // ✅ استيراد localStorage لاستخدامه على الويب
-import 'package:iptv_player_web/view/screen/ActivationPage.dart';
-import 'package:iptv_player_web/view/screen/login.dart';
+import 'package:iptv_player_web/view/screen/Users/ActivationPage.dart';
+import 'package:iptv_player_web/view/screen/Users/login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

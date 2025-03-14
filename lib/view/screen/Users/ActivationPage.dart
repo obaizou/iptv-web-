@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iptv_player_web/view/screen/login.dart';
+import 'package:iptv_player_web/view/screen/Users/login.dart';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
@@ -184,19 +184,19 @@ class ActivationPage extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("تأكيد الخروج"),
-          content: Text("هل أنت متأكد أنك تريد تسجيل الخروج؟"),
+          title: Text("Confirm Exit"),
+          content: Text("Are you sure you want to log out?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("إلغاء"),
+              child: Text("Cancel"),
             ),
             TextButton(
               onPressed: () {
                 html.window.localStorage.remove('mac_address');
                 Get.offAll(Login());
               },
-              child: Text("نعم", style: TextStyle(color: Colors.red)),
+              child: Text("Yes", style: TextStyle(color: Colors.red)),
             ),
           ],
         );

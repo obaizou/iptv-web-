@@ -202,7 +202,7 @@ import 'package:get/get_common/get_reset.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
 import 'dart:html' as html;
-import 'package:iptv_player_web/view/screen/ActivationPage.dart';
+import 'package:iptv_player_web/view/screen/Users/ActivationPage.dart';
 
 class Login extends StatelessWidget {
   final TextEditingController macController = TextEditingController();
