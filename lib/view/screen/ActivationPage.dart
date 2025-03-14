@@ -276,10 +276,6 @@ class ActivationPage extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // _buildButton("Add Playlist(M3U)", Colors.red, () {
-                            //   showPlaylistForm.value = !showPlaylistForm.value;
-                            //   showXtreamForm.value = false;
-                            // }),
                             _buildButton("Add Playlist(M3U)", Colors.red, () {
                               showPlaylistForm.value = !showPlaylistForm.value;
                               showXtreamForm.value = false;
