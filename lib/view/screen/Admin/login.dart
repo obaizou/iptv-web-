@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart'; // ✅ لتخزين بيانات المستخدم
+import 'package:get_storage/get_storage.dart';
+import 'package:iptv_player_web/view/screen/Admin/HomeAdmin.dart'; // ✅ لتخزين بيانات المستخدم
 
 class LoginADMIN extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
@@ -41,7 +42,7 @@ class LoginADMIN extends StatelessWidget {
           box.write('password', password);
 
           isLoading.value = false;
-          Get.offAllNamed('/homeAdmin'); // ✅ الانتقال إلى صفحة الأدمن
+          Get.offAll(HomeAdmin());
           return;
         } else {
           if (!autoLogin) errorMessage.value = "❌ The password is incorrect.";
