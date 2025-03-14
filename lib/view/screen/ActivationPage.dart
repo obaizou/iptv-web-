@@ -9,6 +9,7 @@ class ActivationPage extends StatelessWidget {
   final String macAddress;
   final ValueNotifier<bool> showPlaylistForm = ValueNotifier(false);
   final ValueNotifier<bool> showXtreamForm = ValueNotifier(false);
+  final ValueNotifier<bool> showActivateForm = ValueNotifier(false);
   final ValueNotifier<bool> showValidationResult = ValueNotifier(false);
   ValueNotifier<bool> showXtreamDetails = ValueNotifier(false);
   Map<String, dynamic>? xtreamData;
@@ -16,6 +17,98 @@ class ActivationPage extends StatelessWidget {
   Map<String, dynamic>? m3uData;
   Map<String, dynamic>? validatedData;
   ActivationPage({required this.macAddress});
+
+  void _deletePlaylist(Map<String, dynamic> playlist, String macAddress) async {
+    DocumentReference docRef =
+        FirebaseFirestore.instance.collection('devices').doc(macAddress);
+
+    try {
+      DocumentSnapshot doc = await docRef.get();
+      List<dynamic> updatedList = List.from(doc['playlist_data']);
+
+      updatedList.removeWhere((p) => p['server'] == playlist['server']);
+
+      await docRef.update({'playlist_data': updatedList});
+
+      Get.snackbar("Deleted", "Playlist removed successfully",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } catch (e) {
+      print("Error deleting playlist: $e");
+    }
+  }
+
+  void _editPlaylist(
+      BuildContext context, Map<String, dynamic> playlist, String macAddress) {
+    TextEditingController serverController =
+        TextEditingController(text: playlist['server']);
+    TextEditingController usernameController =
+        TextEditingController(text: playlist['username']);
+    TextEditingController passwordController =
+        TextEditingController(text: playlist['password']);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Edit Playlist"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: serverController,
+                decoration: InputDecoration(labelText: "Server"),
+              ),
+              if (playlist['type'] != 'M3U') ...[
+                TextField(
+                  controller: usernameController,
+                  decoration: InputDecoration(labelText: "Username"),
+                ),
+                TextField(
+                  controller: passwordController,
+                  decoration: InputDecoration(labelText: "Password"),
+                  obscureText: true,
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                /// تحديث البيانات في Firestore
+                DocumentReference docRef = FirebaseFirestore.instance
+                    .collection('devices')
+                    .doc(macAddress);
+
+                List<dynamic> updatedList =
+                    (await docRef.get()).get('playlist_data');
+                int index = updatedList
+                    .indexWhere((p) => p['server'] == playlist['server']);
+
+                if (index != -1) {
+                  updatedList[index] = {
+                    "server": serverController.text,
+                    "username": usernameController.text,
+                    "password": passwordController.text,
+                    "type": playlist['type']
+                  };
+
+                  await docRef.update({'playlist_data': updatedList});
+                }
+
+                Navigator.pop(context);
+              },
+              child: Text("Save", style: TextStyle(color: Colors.green)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<bool> validateM3U(String url) async {
     try {
       final response = await http.get(Uri.parse(url));
@@ -190,13 +283,19 @@ class ActivationPage extends StatelessWidget {
                             _buildButton("Add Playlist(M3U)", Colors.red, () {
                               showPlaylistForm.value = !showPlaylistForm.value;
                               showXtreamForm.value = false;
+                              showActivateForm.value = false;
                             }),
                             _buildButton("Xtream Codes",
                                 Color.fromARGB(255, 246, 132, 9), () {
                               showXtreamForm.value = !showXtreamForm.value;
+                              showActivateForm.value = false;
                               showPlaylistForm.value = false;
                             }),
-                            _buildButton("Activate", Colors.green, () {}),
+                            _buildButton("Activate", Colors.green, () {
+                              showActivateForm.value = !showActivateForm.value;
+                              showXtreamForm.value = false;
+                              showPlaylistForm.value = false;
+                            }),
                             _buildButton("Logout", Colors.blue, () {
                               _logout(context);
                             }),
@@ -221,10 +320,122 @@ class ActivationPage extends StatelessWidget {
                               : SizedBox.shrink();
                         },
                       ),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: showActivateForm,
+                        builder: (context, isVisible, child) {
+                          return isVisible
+                              ? _buildActivateForm()
+                              : SizedBox.shrink();
+                        },
+                      ),
                     ],
                   ),
                 ),
               ),
+
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// ✅ العناوين الرئيسية
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('TYPE',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                        Text('SERVER',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                        Text('USERNAME',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                        Text('PASSWORD',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                        Text('ACTIONS',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+
+                    /// ✅ عرض قائمة السيرفرات من Firestore
+                    if (deviceData['playlist_data'] != null &&
+                        deviceData['playlist_data'] is List)
+                      Column(
+                        children:
+                            deviceData['playlist_data'].map<Widget>((playlist) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                /// 🟢 TYPE
+                                Text(playlist['type'] ?? '-',
+                                    style: TextStyle(color: Colors.white)),
+
+                                /// 🌍 SERVER
+                                Text(playlist['server'] ?? '-',
+                                    style: TextStyle(color: Colors.white)),
+
+                                /// 👤 USERNAME (لا يظهر إذا كان M3U)
+                                Text(
+                                    playlist['type'] == 'M3U'
+                                        ? '-'
+                                        : (playlist['username'] ?? '-'),
+                                    style: TextStyle(color: Colors.white)),
+
+                                /// 🔑 PASSWORD (لا يظهر إذا كان M3U)
+                                Text(
+                                    playlist['type'] == 'M3U'
+                                        ? '-'
+                                        : (playlist['password'] ?? '-'),
+                                    style: TextStyle(color: Colors.white)),
+
+                                /// ✏️ & ❌ ACTIONS
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon:
+                                          Icon(Icons.edit, color: Colors.blue),
+                                      onPressed: () {
+                                        _editPlaylist(
+                                            context, playlist, macAddress);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon:
+                                          Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () {
+                                        _deletePlaylist(playlist, macAddress);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      )
+                    else
+                      Center(
+                        child: Text("No data found",
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                  ],
+                ),
+              )
             ],
           );
         },
@@ -266,6 +477,20 @@ class ActivationPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildActivateForm() {
+    final TextEditingController ActivateKeyController = TextEditingController();
+
+    return _buildFormContainer("Add Your Key To Activate Your Device", [
+      SizedBox(height: 10),
+      Text(
+        'KEY',
+        style: TextStyle(
+            fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      _buildTextField("KEY", ActivateKeyController),
+    ]);
   }
 
   /// 🎯 **نموذج إدخال Playlist (M3U)**
@@ -315,30 +540,32 @@ class ActivationPage extends StatelessWidget {
         Get.snackbar("Success", "M3U Playlist added successfully",
             backgroundColor: Colors.green, colorText: Colors.white);
       }),
-      ValueListenableBuilder<bool>(
-        valueListenable: showM3UDetails,
-        builder: (context, isVisible, child) {
-          return isVisible
-              ? Container(
-                  padding: EdgeInsets.all(10),
-                  margin: EdgeInsets.only(top: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.green[800],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      Text("Playlist Name: ${m3uData!['name']}",
-                          style: TextStyle(color: Colors.white)),
-                      Text("Playlist URL: ${m3uData!['url']}",
-                          style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                )
-              : SizedBox.shrink();
-        },
-      ),
     ]);
+  }
+
+  Widget _buildTableHeader(String text) {
+    return Expanded(
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildTableCell(String text) {
+    return Expanded(
+      child: Text(
+        text,
+        style: TextStyle(color: Colors.white, fontSize: 14),
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis, // قص النص إذا كان طويلًا
+      ),
+    );
   }
 
   /// 🎯 **نموذج إدخال Xtream Codes**
@@ -402,29 +629,6 @@ class ActivationPage extends StatelessWidget {
         Get.snackbar("Success", "Xtream Codes added successfully",
             backgroundColor: Colors.green, colorText: Colors.white);
       }),
-      ValueListenableBuilder<bool>(
-        valueListenable: showXtreamDetails,
-        builder: (context, isVisible, child) {
-          return isVisible
-              ? Container(
-                  padding: EdgeInsets.all(10),
-                  margin: EdgeInsets.only(top: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.green[800],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      Text("Server: ${xtreamData!['server']}",
-                          style: TextStyle(color: Colors.white)),
-                      Text("Username: ${xtreamData!['username']}",
-                          style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                )
-              : SizedBox.shrink();
-        },
-      ),
     ]);
   }
 
