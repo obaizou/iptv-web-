@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:iptv_player_web/view/screen/Admin/login.dart'; // استيراد صفحة Login
 
 class HomeAdmin extends StatelessWidget {
@@ -13,10 +12,7 @@ class HomeAdmin extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // استدعاء وظيفة تسجيل الخروج من صفحة Login
-              LoginADMIN().logout();
-            },
+            onPressed: () {},
           ),
         ],
       ),

@@ -20,7 +20,7 @@ class Login extends StatelessWidget {
     String deviceKey = deviceKeyController.text.trim();
 
     if (macAddress.isEmpty || deviceKey.isEmpty) {
-      errorMessage.value = "يرجى إدخال جميع البيانات.";
+      errorMessage.value = "Please enter all the data.";
       return;
     }
 
@@ -47,14 +47,15 @@ class Login extends StatelessWidget {
 
           return;
         } else {
-          errorMessage.value = "رمز الجهاز غير صحيح، يرجى التحقق.";
+          errorMessage.value = "The device code is incorrect, please check.";
         }
       } else {
-        errorMessage.value = "هذا الجهاز غير مسجل، يرجى التحقق.";
+        errorMessage.value = "This device is not registered, please check.";
       }
     } catch (e) {
-      errorMessage.value = "حدث خطأ أثناء التحقق، حاول مجددًا.";
-      print("❌ خطأ في Firestore: $e");
+      errorMessage.value =
+          "An error occurred during verification, please try again.";
+      print("❌ Error in Firestore: $e");
     }
 
     isLoading.value = false;

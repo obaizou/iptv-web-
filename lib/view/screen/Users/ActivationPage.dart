@@ -220,7 +220,7 @@ class ActivationPage extends StatelessWidget {
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Center(
               child: Text(
-                "لم يتم العثور على بيانات الجهاز ❌",
+                "Device data not found ❌",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             );
@@ -229,7 +229,7 @@ class ActivationPage extends StatelessWidget {
           final deviceData = snapshot.data!;
           bool isActivated = deviceData['is_activated'] ?? false;
           String statusText = isActivated ? "Active ✅" : "Inactive ❌";
-          String expirationDate = deviceData['expiration'] ?? "غير متوفر";
+          String expirationDate = deviceData['expiration'] ?? "Unavailable";
 
           return ListView(
             padding: EdgeInsets.all(20),

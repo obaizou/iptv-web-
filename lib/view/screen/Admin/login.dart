@@ -18,7 +18,7 @@ class LoginADMIN extends StatelessWidget {
     String password = passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
-      if (!autoLogin) errorMessage.value = "يرجى إدخال جميع البيانات.";
+      if (!autoLogin) errorMessage.value = "Please enter all the information.";
       return;
     }
 
@@ -44,13 +44,14 @@ class LoginADMIN extends StatelessWidget {
           Get.offAllNamed('/homeAdmin'); // ✅ الانتقال إلى صفحة الأدمن
           return;
         } else {
-          if (!autoLogin) errorMessage.value = "❌ كلمة المرور غير صحيحة.";
+          if (!autoLogin) errorMessage.value = "❌ The password is incorrect.";
         }
       } else {
-        if (!autoLogin) errorMessage.value = "❌ المستخدم غير موجود.";
+        if (!autoLogin) errorMessage.value = "❌ User not found.";
       }
     } catch (e) {
-      if (!autoLogin) errorMessage.value = "⚠️ حدث خطأ أثناء التحقق.";
+      if (!autoLogin)
+        errorMessage.value = "⚠️ An error occurred during verification.";
       print("❌ خطأ في Firestore: $e");
     }
 
