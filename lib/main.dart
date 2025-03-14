@@ -1,9 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:html' as html; // ✅ استيراد localStorage لاستخدامه على الويب
-import 'package:iptv_player_web/view/screen/Users/ActivationPage.dart';
-import 'package:iptv_player_web/view/screen/Users/login.dart';
+import 'package:iptv_player_web/view/screen/Admin/HomeAdmin.dart';
+import 'package:iptv_player_web/view/screen/Admin/login.dart' as AdminLogin;
+import 'package:iptv_player_web/view/screen/Users/login.dart' as UserLogin;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,34 +17,10 @@ void main() async {
           appId: "1:484404976099:web:77073767e61166d496e8d6",
           measurementId: "G-NB3S68HYG3"));
 
-  String? savedMacAddress = getSavedMacAddress();
-
-  runApp(MyApp(
-      initialPage: savedMacAddress != null
-          ? ActivationPage(macAddress: savedMacAddress)
-          : Login()));
-}
-
-/// ✅ استرجاع MAC Address من `localStorage`
-String? getSavedMacAddress() {
-  return html.window.localStorage['mac_address'];
-}
-
-/// ✅ حفظ MAC Address عند تسجيل الدخول
-void saveMacAddress(String macAddress) {
-  html.window.localStorage['mac_address'] = macAddress;
-}
-
-/// ✅ مسح MAC Address عند تسجيل الخروج
-void clearMacAddress() {
-  html.window.localStorage.remove('mac_address');
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final Widget initialPage;
-
-  const MyApp({super.key, required this.initialPage});
-
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -54,7 +30,18 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: initialPage, // ✅ تحديد الصفحة الأولى بناءً على تسجيل الدخول
+      initialRoute: "/user", // ✅ اجعل الصفحة الافتراضية هي الرئيسية
+      getPages: [
+        GetPage(
+            name: "/admin",
+            page: () => AdminLogin.Login()), // ✅ صفحة تسجيل الأدمن
+        GetPage(
+            name: "/user",
+            page: () => UserLogin.Login()), // ✅ صفحة تسجيل المستخدم
+        GetPage(
+            name: "/homeAdmin",
+            page: () => HomeAdmin()), // ✅ صفحة الأدمن الرئيسية
+      ],
     );
   }
 }

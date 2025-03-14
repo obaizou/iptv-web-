@@ -328,7 +328,9 @@ class ActivationPage extends StatelessWidget {
                   ),
                 ),
               ),
-
+              SizedBox(
+                height: 20,
+              ),
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -338,7 +340,6 @@ class ActivationPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// ✅ العناوين الرئيسية
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
