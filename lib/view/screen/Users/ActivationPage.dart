@@ -110,14 +110,14 @@ class ActivationPage extends StatelessWidget {
     );
   }
 
-  Future<bool> validateM3U(String url) async {
-    try {
-      final response = await http.get(Uri.parse(url));
-      return response.statusCode == 200 && response.body.contains("#EXTM3U");
-    } catch (e) {
-      return false;
-    }
-  }
+  // Future<bool> validateM3U(String url) async {
+  //   try {
+  //     // final response = await http.get(Uri.parse(url));
+  //     // return response.statusCode == 200;
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // }
 
   Future<bool> validateXtream(String server, String user, String pass) async {
     if (!server.startsWith("http")) {
@@ -383,8 +383,13 @@ class ActivationPage extends StatelessWidget {
                                     style: TextStyle(color: Colors.white)),
 
                                 /// 🌍 SERVER
-                                Text(playlist['server'] ?? '-',
+                                Text(
+                                    playlist['type'] == 'M3U'
+                                        ? playlist['url']
+                                        : playlist['server'],
                                     style: TextStyle(color: Colors.white)),
+                                // Text(playlist['type'] ?? '-',
+                                //     style: TextStyle(color: Colors.white)),
 
                                 /// 👤 USERNAME (لا يظهر إذا كان M3U)
                                 Text(
@@ -572,7 +577,7 @@ class ActivationPage extends StatelessWidget {
           return;
         }
 
-        bool isValid = await validateM3U(url);
+        bool isValid = await true;
         if (!isValid) {
           Get.snackbar("Invalid Playlist", "The provided M3U URL is not valid",
               backgroundColor: Colors.red, colorText: Colors.white);
