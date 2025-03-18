@@ -476,19 +476,6 @@ class ActivationPage extends StatelessWidget {
     );
   }
 
-  // Widget _buildActivateForm() {
-  //   final TextEditingController ActivateKeyController = TextEditingController();
-
-  //   return _buildFormContainer("Add Your Key To Activate Your Device", [
-  //     SizedBox(height: 10),
-  //     Text(
-  //       'KEY',
-  //       style: TextStyle(
-  //           fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
-  //     ),
-  //     _buildTextField("KEY", ActivateKeyController),
-  //   ]);
-  // }
   Widget _buildActivateForm() {
     final TextEditingController activateKeyController = TextEditingController();
 
@@ -551,68 +538,6 @@ class ActivationPage extends StatelessWidget {
       }),
     ]);
   }
-  // Widget _buildActivateForm() {
-  //   final TextEditingController activateKeyController = TextEditingController();
-
-  //   return _buildFormContainer("Add Your Key To Activate Your Device", [
-  //     SizedBox(height: 10),
-  //     Text(
-  //       'KEY',
-  //       style: TextStyle(
-  //           fontSize: 23, fontWeight: FontWeight.bold, color: Colors.white),
-  //     ),
-  //     _buildTextField("KEY", activateKeyController),
-  //     SizedBox(height: 10),
-  //     _buildButton("SUBMIT", Colors.red, () async {
-  //       String key = activateKeyController.text.trim();
-
-  //       if (key.isEmpty) {
-  //         Get.snackbar("Error", "Key is required",
-  //             backgroundColor: Colors.red, colorText: Colors.white);
-  //         return;
-  //       }
-
-  //       // البحث عن المفتاح في Firestore
-  //       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-  //           .collection('activate_keys')
-  //           .where('key', isEqualTo: key)
-  //           .get();
-
-  //       if (querySnapshot.docs.isEmpty) {
-  //         Get.snackbar("Error", "Invalid Key",
-  //             backgroundColor: Colors.red, colorText: Colors.white);
-  //         return;
-  //       }
-
-  //       var keyData = querySnapshot.docs.first.data() as Map<String, dynamic>;
-
-  //       if (keyData['finish'] == true) {
-  //         Get.snackbar("Error", "Key already used",
-  //             backgroundColor: Colors.red, colorText: Colors.white);
-  //         return;
-  //       }
-
-  //       // تحديث المفتاح ليكون مستخدمًا
-  //       await FirebaseFirestore.instance
-  //           .collection('activate_keys')
-  //           .doc(querySnapshot.docs.first.id)
-  //           .update({'finish': true});
-
-  //       // تحديث حالة الجهاز
-  //       await FirebaseFirestore.instance
-  //           .collection('devices')
-  //           .doc(macAddress)
-  //           .update({
-  //         'is_activated': true,
-  //         'created_at': keyData['created_at'],
-  //         'expires_at': keyData['expires_at']
-  //       });
-
-  //       Get.snackbar("Success", "Device activated successfully",
-  //           backgroundColor: Colors.green, colorText: Colors.white);
-  //     }),
-  //   ]);
-  // }
 
   /// 🎯 **نموذج إدخال Playlist (M3U)**
 
